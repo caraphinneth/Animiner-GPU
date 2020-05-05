@@ -1,8 +1,10 @@
 #pragma once
 
+#include <QLineEdit>
 #include <QMainWindow>
 #include <QPlainTextEdit>
 #include <QProcess>
+#include <QSpinBox>
 
 class MainWindow : public QMainWindow
 {
@@ -18,4 +20,8 @@ private:
     QPlainTextEdit* logger;
     QProcess* miner;
     QString miner_command;
+
+    QLineEdit* input_address;
+    QLineEdit* input_url;
+    QSpinBox* input_intensity;
 };

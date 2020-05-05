@@ -4,10 +4,8 @@
 #include "QComboBox"
 #include "QGroupBox"
 #include "QLabel"
-#include "QLineEdit"
 #include "QPushButton"
 #include "QSettings"
-#include "QSpinBox"
 #include "QVBoxLayout"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
@@ -35,16 +33,23 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     miner_command = (vendor == "NVidia") ? "ccminer" : "wildrig";
 
     QLabel* label2 = new QLabel (tr("Your Animecoin wallet address:"));
-    QLineEdit* input_address = new QLineEdit (this);
+    input_address = new QLineEdit (this);
 
     QLabel* label3 = new QLabel (tr("Intensity (NVidia only):"));
-    QSpinBox* input_intensity = new QSpinBox (this);
+    input_intensity = new QSpinBox (this);
     QLabel* label4 = new QLabel (tr("Lower intensity means less GPU load for the sake of other applications. Miner may fail to start with overly high (>25) intensity values."));
+
+    QLabel* label5 = new QLabel (tr("Mining pool URL:"));
+    input_url = new QLineEdit (this);
 
     settings.beginGroup ("Arguments");
     QString address = settings.value ("Address", "").toString();
     if (!address.isEmpty())
         input_address->setText (address);
+
+    QString url = settings.value ("URL", "stratum+tcp://miningbase.tk:3033").toString();
+    if (!url.isEmpty())
+        input_url->setText (url);
 
     int intensity = settings.value ("Intensity", 9).toInt();
     input_intensity->setValue (intensity);
@@ -61,6 +66,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     settings_layout->addWidget (label3);
     settings_layout->addWidget (input_intensity);
     settings_layout->addWidget (label4);
+    settings_layout->addWidget (label5);
+    settings_layout->addWidget (input_url);
 
     settings_box->setLayout (settings_layout);
 
@@ -119,7 +126,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             logger->appendPlainText ("Miner failed to start. Likely the executable is missing.");
     });
 
-    connect (gpu_type, QOverload<int>::of(&QComboBox::currentIndexChanged), [this, input_intensity](int index)
+    connect (gpu_type, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index)
     {
         QSettings settings;
         settings.beginGroup ("GPU");
@@ -146,6 +153,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         settings.endGroup();
     });
 
+    connect (input_url, &QLineEdit::textChanged, [this](const QString& text)
+    {
+        QSettings settings;
+        settings.beginGroup ("Arguments");
+        settings.setValue ("URL", text);
+        settings.endGroup();
+    });
+
     connect (input_intensity, QOverload<int>::of(&QSpinBox::valueChanged), [this](int i)
     {
         QSettings settings;
@@ -154,12 +169,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         settings.endGroup();
     });
 
-    connect (big_button, &QPushButton::clicked, [this, input_address, input_intensity, gpu_type]()
+    connect (big_button, &QPushButton::clicked, [this, gpu_type]()
     {
         if (miner->state() == QProcess::NotRunning)
         {
             QStringList args;
-            args << "-a" << "anime" << "-o" << "stratum+tcp://miningbase.tk:3033" << "-u" << input_address->text() << "-p" << "c=ANI";
+            args << "-a" << "anime" << "-o" << input_url->text() << "-u" << input_address->text() << "-p" << "c=ANI";
             if ((gpu_type->currentIndex() == 0)&&(input_intensity->value() > 9))
                 args << "-i" << input_intensity->cleanText();
             miner->start (miner_command, args);
