@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     QLabel* label3 = new QLabel (tr("Intensity (NVidia only):"));
     input_intensity = new QSpinBox (this);
-    QLabel* label4 = new QLabel (tr("Lower intensity means less GPU load for the sake of other applications. Miner may fail to start with overly high (>25) intensity values."));
+    QLabel* label4 = new QLabel (tr("Lower intensity means less GPU load for the sake of other applications. Miner may fail to start with overly high intensity values."));
 
     QLabel* label5 = new QLabel (tr("Mining pool URL:"));
     input_url = new QLineEdit (this);
@@ -55,7 +55,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     input_intensity->setValue (intensity);
     settings.endGroup();
 
-    input_intensity->setRange (9, 31);
+    if (vendor == "NVidia")
+        input_intensity->setRange (9, 31);
+    else
+        input_intensity->setRange (0, 4000);
     input_intensity->setSpecialValueText (tr("Automatic"));
 
     QVBoxLayout* settings_layout = new QVBoxLayout (central_widget);
@@ -133,13 +136,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         if (index == 0)
         {
             miner_command = "ccminer";
-            input_intensity->setEnabled (true);
+            input_intensity->setRange (9, 31);
             settings.setValue ("Vendor", "NVidia");
         }
         else if (index == 1)
         {
             miner_command = "wildrig";
-            input_intensity->setEnabled (false);
+            input_intensity->setRange (0, 4000);
             settings.setValue ("Vendor", "AMD");
         }
         settings.endGroup ();
@@ -177,6 +180,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             args << "-a" << "anime" << "-o" << input_url->text() << "-u" << input_address->text() << "-p" << "c=ANI";
             if ((gpu_type->currentIndex() == 0)&&(input_intensity->value() > 9))
                 args << "-i" << input_intensity->cleanText();
+            else if (gpu_type->currentIndex() == 1)
+            {
+                if (input_intensity->value() > 0)
+                    args << "--opencl-launch" << input_intensity->cleanText()+"x64";
+                else
+                    args << "--opencl-launch" << "20x64"; // workaround for new Wildrig issue.
+            }
             miner->start (miner_command, args);
         }
         else
