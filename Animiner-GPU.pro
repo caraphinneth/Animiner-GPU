@@ -1,5 +1,8 @@
-QT       += core gui widgets
+QT       += core gui widgets network
 CONFIG += c++11 exceptions_off static
+
+LIBS += -larchive
+win32: LIBS += -lbcrypt -liconv -lzstd -llzma -llz4 -lbz2 -lz -lexpat
 
 QMAKE_CXXFLAGS+="-O2 -march=x86-64"
 # The following define makes your compiler emit warnings if you use
@@ -18,6 +21,7 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    arc.h \
     mainwindow.h
 
 # Default rules for deployment.
