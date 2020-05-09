@@ -276,6 +276,7 @@ void MainWindow::download_updates()
                     file->close();
                     logger->appendPlainText (tr("Unpacking..."));
                     extract (filename.toUtf8().data());
+                    logger->appendPlainText (tr("Unpacking done."));
                 }
             }
             else if (download_miner->error() == QNetworkReply::OperationCanceledError)
@@ -305,6 +306,7 @@ void MainWindow::download_updates()
         {
             logger->appendPlainText (tr("Up to date, unzipping..."));
             extract (filename.toUtf8().data());
+            logger->appendPlainText (tr("Done."));
             get_ready_to_work();
         }
     }
