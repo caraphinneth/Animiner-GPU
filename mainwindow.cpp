@@ -106,17 +106,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         {
             big_button->setText (tr("Starting..."));
             big_button->setEnabled (false);
+            gpu_type->setEnabled (false);
             status_bar->showMessage (tr("Starting..."));
         }
         else if (new_state == QProcess::Running)
         {
             big_button->setText (tr("Stop"));
             big_button->setEnabled (true);
+            gpu_type->setEnabled (false);
         }
         else
         {
             big_button->setText (tr("Start"));
             big_button->setEnabled (true);
+            gpu_type->setEnabled (true);
             logger->appendPlainText (tr("Mining stopped with code %1.").arg(miner->exitCode()));
             status_bar->showMessage (tr("Mining stopped."));
         }
@@ -134,7 +137,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             if (!s.isEmpty())
             {
                 logger->appendPlainText (s);
-                status_bar->showMessage (tr("Mining..."));
+                //status_bar->showMessage (tr("Mining..."));
+                QRegExp stats;
+                if (gpu_type->currentIndex() == 0)
+                    stats = QRegExp(".*accepted.*(\\d+)/(\\d+).*(\\d+.\\d+.[?kMG]H/s)");
+                else if (gpu_type->currentIndex() == 1)
+                    stats = QRegExp(".*hashrate: 10s: (\\d+).*([?kMG]H/s)");
+                if (s.contains (stats))
+                {
+                    if (gpu_type->currentIndex() == 0)
+                        status_bar->showMessage (tr("Mining at %1.").arg (stats.cap (3)));
+                    else if (gpu_type->currentIndex() == 1)
+                        status_bar->showMessage (tr("Mining at %1 %2.").arg (stats.cap (1)).arg (stats.cap (2)));
+                }
+
             }
         }
     });
